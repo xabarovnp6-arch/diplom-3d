@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Интерьер — Камеры К1–К6</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#0f1420;color:#e0e6f0;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  header{background:#151928;border-bottom:1px solid #2a3560;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  header h1{font-size:15px;font-weight:600;color:#7eb8f7;}
+  header span{font-size:11px;color:#4a6080;}
+  .layout{display:flex;flex:1;overflow:hidden;}
+  .sidebar{width:250px;min-width:250px;background:#151928;border-right:1px solid #2a3560;display:flex;flex-direction:column;overflow-y:auto;}
+  .sec{padding:11px 13px;border-bottom:1px solid #1e2540;}
+  .sec h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#4a6080;margin-bottom:8px;}
+  .cam-item{padding:7px 9px;border:1px solid #2a3560;border-radius:5px;background:#1e2540;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .cam-item:hover{background:#252d50;}
+  .cam-item.active{background:#1a3a6a;border-color:#3a7ad0;}
+  .cam-dot{width:9px;height:9px;border-radius:50%;background:#1d9e75;flex-shrink:0;}
+  .cam-item.active .cam-dot{background:#ff6600;box-shadow:0 0 6px #ff6600;}
+  .cam-name{font-size:12px;font-weight:600;color:#7eb8f7;}
+  .cam-room{font-size:10px;color:#5070a0;}
+  .slider-row{margin-bottom:10px;}
+  .slider-row label{font-size:11px;color:#6070a0;display:flex;justify-content:space-between;margin-bottom:3px;}
+  .slider-row label span{color:#7eb8f7;font-weight:600;}
+  input[type=range]{width:100%;height:3px;border-radius:2px;background:#2a3560;outline:none;border:none;cursor:pointer;-webkit-appearance:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#3a7ad0;cursor:pointer;}
+  .vbtns{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+  .vbtn{padding:6px 4px;border:1px solid #2a3560;border-radius:4px;background:#1e2540;color:#6070a0;font-size:10px;cursor:pointer;text-align:center;}
+  .vbtn:hover{background:#252d50;color:#8090b0;}
+  .info-box{background:#1e2540;border-radius:5px;padding:9px;font-size:11px;color:#6070a0;line-height:1.8;}
+  .info-box strong{color:#7eb8f7;}
+  .canvas-wrap{flex:1;position:relative;}
+  canvas{display:block;width:100%;height:100%;}
+  .hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(10,15,30,0.9);border:1px solid #2a3560;border-radius:14px;padding:4px 14px;font-size:11px;color:#4a6080;pointer-events:none;white-space:nowrap;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏢 3D Интерьер · Камеры К1–К6 (без интернета)</h1>
+  <span>Администрация «Соболохский национальный наслег» · Hikvision DS-2CD2143G2-I · 4 Мп</span>
+</header>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sec">
+      <h3>Камеры (6 шт)</h3>
+      <div id="camList">
+        <div class="cam-item active" onclick="selectCam(0)"><div class="cam-dot"></div><div><div class="cam-name">К1 — Коридор</div><div class="cam-room">Конец · 3×15 м</div></div></div>
+        <div class="cam-item" onclick="selectCam(1)"><div class="cam-dot"></div><div><div class="cam-name">К2 — Архив</div><div class="cam-room">Угол · 6×8 м</div></div></div>
+        <div class="cam-item" onclick="selectCam(2)"><div class="cam-dot"></div><div><div class="cam-name">К3 — Серверная</div><div class="cam-room">Угол · 6×7 м</div></div></div>
+        <div class="cam-item" onclick="selectCam(3)"><div class="cam-dot"></div><div><div class="cam-name">К4 — Приёмная</div><div class="cam-room">Угол · 7×8 м</div></div></div>
+        <div class="cam-item" onclick="selectCam(4)"><div class="cam-dot"></div><div><div class="cam-name">К5 — Тех. пом.</div><div class="cam-room">Угол · 7×4 м</div></div></div>
+        <div class="cam-item" onclick="selectCam(5)"><div class="cam-dot"></div><div><div class="cam-name">К6 — Коридор</div><div class="cam-room">Вход · напротив К1</div></div></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>Параметры: <span id="activeName" style="color:#7eb8f7">К1</span></h3>
+      <div class="slider-row"><label>Поворот <span id="lblRot">180°</span></label><input type="range" id="slRot" min="-180" max="180" step="1" value="180"></div>
+      <div class="slider-row"><label>Наклон вниз <span id="lblTilt">18°</span></label><input type="range" id="slTilt" min="0" max="80" step="1" value="18"></div>
+      <div class="slider-row"><label>Угол обзора <span id="lblFov">55°</span></label><input type="range" id="slFov" min="15" max="100" step="1" value="55"></div>
+    </div>
+    <div class="sec">
+      <h3>Вид сцены</h3>
+      <div class="vbtns">
+        <button class="vbtn" onclick="setView(40,20)">Общий</button>
+        <button class="vbtn" onclick="setView(89,0)">Сверху</button>
+        <button class="vbtn" onclick="setView(15,0)">Спереди</button>
+        <button class="vbtn" onclick="setView(15,90)">Сбоку</button>
+        <button class="vbtn" onclick="setView(40,45)">Угол 45°</button>
+        <button class="vbtn" onclick="setView(40,-45)">Угол -45°</button>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="info-box">
+        <strong>Вход:</strong> сверху по центру коридора<br>
+        <strong>Слева:</strong> архив (верх) + серверная (низ)<br>
+        <strong>Справа:</strong> приёмная + тех. пом. + туалет<br>
+        <strong>Туалет:</strong> без камеры (приватность)<br>
+        <strong>Коридор:</strong> К1 + К6 (двойной контроль)<br>
+        <strong>Модель:</strong> Hikvision DS-2CD2143G2-I<br>
+        <strong>Управление:</strong> мышь + колёсико
+      </div>
+    </div>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="c"></canvas>
+    <div class="hint">🖱 Перетащи = вращение · Колёсико = масштаб</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// ОСНОВНЫЕ ПЕРЕМЕННЫЕ
+// ============================================================
+var canvas = document.getElementById('c');
+var ctx = canvas.getContext('2d');
+var SC = 20, RH = 2.7;
+var vPitch = 40, vYaw = 20, vZoom = 1.0;
+var tP = 40, tY = 20, tZ = 1.0;
+var cw = 0, ch = 0;
+var BCX = -0.5, BCZ = 7.5;
+
+// ============================================================
+// ПЛАНИРОВКА (точно по картинке)
+// Коридор: x∈[-1.5, 1.5], z∈[0,15]
+// Архив:   x∈[1.5, 7.5],  z∈[7,15]  — отображается слева
+// Серверная: x∈[1.5,7.5], z∈[0,7]
+// Приёмная: x∈[-8.5,-1.5],z∈[7,15] — отображается справа
+// Тех. пом: x∈[-8.5,-1.5],z∈[3,7]
+// Туалет:   x∈[-8.5,-1.5],z∈[0,3]
+// ============================================================
+var ROOMS = [
+  {id:'corr', name:'Коридор',    x1:-1.5, x2:1.5,   z1:0,  z2:15, h:RH, fc:'#231a0c', wc:'#5a4a38', nc:'#aa8860'},
+  {id:'arch', name:'Архив',      x1:1.5,  x2:7.5,   z1:7,  z2:15, h:RH, fc:'#2a1e0a', wc:'#c87820', nc:'#e8a040'},
+  {id:'serv', name:'Серверная',  x1:1.5,  x2:7.5,   z1:0,  z2:7,  h:RH, fc:'#0a1020', wc:'#cc60a0', nc:'#ee80c0'},
+  {id:'rec',  name:'Приёмная',   x1:-8.5,x2:-1.5,  z1:7,  z2:15, h:RH, fc:'#1a1a08', wc:'#70b030', nc:'#88d040'},
+  {id:'tech', name:'Тех. пом.',  x1:-8.5,x2:-1.5,  z1:3,  z2:7,  h:RH, fc:'#0c1418', wc:'#30c0c0', nc:'#40e0e0'},
+  {id:'toil', name:'Туалет',     x1:-8.5,x2:-1.5,  z1:0,  z2:3,  h:RH, fc:'#0c0c18', wc:'#8060d0', nc:'#a080f0'},
+];
+
+// Камеры
+var CAMS = [
+  {name:'К1', x:0,    z:1.5,  rot:0,    tilt:18, fov:55},
+  {name:'К2', x:7,    z:14.5, rot:-139, tilt:30, fov:50},
+  {name:'К3', x:7,    z:0.5,  rot:-45,  tilt:30, fov:50},
+  {name:'К4', x:-8,   z:14.5, rot:137,  tilt:30, fov:50},
+  {name:'К5', x:-8,   z:6.5,  rot:114,  tilt:30, fov:50},
+  {name:'К6', x:0,    z:13.5, rot:180,  tilt:18, fov:55},
+];
+
+var selCam = 0;
+
+// ============================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================================
+function resize() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  cw = canvas.width;
+  ch = canvas.height;
+}
+
+function proj(x, y, z) {
+  var rx = x - BCX, rz = z - BCZ;
+  var yr = vYaw * Math.PI / 180;
+  var xr = rx * Math.cos(yr) + rz * Math.sin(yr);
+  var zr = -rx * Math.sin(yr) + rz * Math.cos(yr);
+  var pr = vPitch * Math.PI / 180;
+  var yp = y * Math.cos(pr) - zr * Math.sin(pr);
+  return { x: cw/2 + xr*SC*vZoom, y: ch/2 - yp*SC*vZoom };
+}
+
+function face(pts, fill, stroke, lw) {
+  if (!pts || pts.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 0.8; ctx.stroke(); }
+}
+
+// ============================================================
+// РИСОВАНИЕ КОМНАТЫ
+// ============================================================
+function drawRoom(r) {
+  var x1=r.x1, x2=r.x2, z1=r.z1, z2=r.z2, h=r.h;
+  var f = [proj(x1,0,z1), proj(x2,0,z1), proj(x2,0,z2), proj(x1,0,z2)];
+  var c = [proj(x1,h,z1), proj(x2,h,z1), proj(x2,h,z2), proj(x1,h,z2)];
+  face(f, r.fc, '#ffffff06');
+  face([f[0],f[1],c[1],c[0]], r.wc+'66', '#ffffff10');
+  face([f[1],f[2],c[2],c[1]], r.wc+'44', '#ffffff06');
+  face([f[2],f[3],c[3],c[2]], r.wc+'77', '#ffffff12');
+  face([f[3],f[0],c[0],c[3]], r.wc+'99', '#ffffff15');
+  face(c, r.wc+'22', '#ffffff05');
+  var mp = proj((x1+x2)/2, h*0.4, (z1+z2)/2);
+  ctx.save();
+  ctx.fillStyle = r.nc + 'dd';
+  ctx.font = 'bold ' + Math.max(8, 9*vZoom) + 'px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+  ctx.fillText(r.name, mp.x, mp.y);
+  ctx.font = Math.max(7, 8*vZoom) + 'px Segoe UI';
+  ctx.fillStyle = r.nc + '88';
+  ctx.fillText((x2-x1)+'×'+(z2-z1)+' м', mp.x, mp.y + 13*vZoom);
+  ctx.restore();
+}
+
+// ============================================================
+// РИСОВАНИЕ КАМЕРЫ С ОБЪЁМНЫМ КОНУСОМ
+// ============================================================
+function drawCam(cfg, idx) {
+  var act = (idx === selCam);
+  var cc = act ? '#ff6600' : '#1d9e75';
+  var py = RH - 0.1;
+  var s = 0.14;
+
+  // Корпус камеры
+  var vb = [proj(cfg.x-s,py-s*.8,cfg.z-s), proj(cfg.x+s,py-s*.8,cfg.z-s),
+            proj(cfg.x+s,py-s*.8,cfg.z+s), proj(cfg.x-s,py-s*.8,cfg.z+s)];
+  var vt = [proj(cfg.x-s,py,cfg.z-s), proj(cfg.x+s,py,cfg.z-s),
+            proj(cfg.x+s,py,cfg.z+s), proj(cfg.x-s,py,cfg.z+s)];
+  var bc = act ? 'rgba(180,40,0,.7)' : 'rgba(15,15,25,.7)';
+  face(vb, bc, cc+'66');
+  face([vb[0],vb[1],vt[1],vt[0]], bc, cc+'44');
+  face([vb[1],vb[2],vt[2],vt[1]], bc, cc+'33');
+  face([vb[2],vb[3],vt[3],vt[2]], bc, cc+'44');
+  face([vb[3],vb[0],vt[0],vt[3]], bc, cc+'55');
+
+  // Глазок
+  var cp = proj(cfg.x, py, cfg.z);
+  ctx.beginPath();
+  ctx.arc(cp.x, cp.y, Math.max(4, 5*vZoom), 0, Math.PI*2);
+  ctx.fillStyle = act ? '#ff9900' : '#00ccff';
+  ctx.fill();
+  ctx.strokeStyle = cc; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // ============================================================
+  // КОНУС: вершина у камеры, свободное направление по rot+tilt
+  // ============================================================
+  var rr = cfg.rot * Math.PI / 180;
+  var tR = cfg.tilt * Math.PI / 180;
+  var halfFov = (cfg.fov || 38) * Math.PI / 180;
+  var coneLen = 4.0;
+  var RAYS = 20;
+
+  // Направление взгляда
+  var dirX = Math.sin(rr) * Math.cos(tR);
+  var dirY = -Math.sin(tR);
+  var dirZ = Math.cos(rr) * Math.cos(tR);
+
+  // Правый вектор (перпендикулярен dir и мировому Y)
+  var rightX = Math.cos(rr);
+  var rightY = 0;
+  var rightZ = -Math.sin(rr);
+
+  // Верхний вектор = right × dir
+  var upX = rightY*dirZ - rightZ*dirY;
+  var upY = rightZ*dirX - rightX*dirZ;
+  var upZ = rightX*dirY - rightY*dirX;
+
+  // Радиус основания конуса
+  var cR = coneLen * Math.tan(halfFov);
+
+  // Вершина конуса
+  var tip = proj(cfg.x, py, cfg.z);
+
+  // Точки окружности основания конуса
+  var base = [];
+  for (var i = 0; i <= RAYS; i++) {
+    var ang = (i / RAYS) * Math.PI * 2;
+    var ca = Math.cos(ang), sa = Math.sin(ang);
+    var bx = cfg.x + dirX*coneLen + rightX*cR*ca + upX*cR*sa;
+    var by = py    + dirY*coneLen + rightY*cR*ca + upY*cR*sa;
+    var bz = cfg.z + dirZ*coneLen + rightZ*cR*ca + upZ*cR*sa;
+    base.push(proj(bx, by, bz));
+  }
+
+  var cF    = act ? 'rgba(255,140,0,.20)' : 'rgba(29,158,117,.16)';
+  var cSide = act ? 'rgba(255,130,0,.12)' : 'rgba(29,158,117,.10)';
+  var cEdge = act ? 'rgba(255,160,0,.65)' : 'rgba(29,158,117,.55)';
+
+  // Боковые грани конуса
+  for (var i = 0; i < RAYS; i++) {
+    face([tip, base[i], base[i+1]], cSide, cEdge, 0.3);
+  }
+
+  // Основание конуса
+  ctx.beginPath();
+  ctx.moveTo(base[0].x, base[0].y);
+  for (var i = 1; i <= RAYS; i++) ctx.lineTo(base[i].x, base[i].y);
+  ctx.closePath();
+  ctx.fillStyle = cF; ctx.fill();
+  ctx.strokeStyle = cEdge; ctx.lineWidth = 0.8; ctx.stroke();
+
+  // Два ребра (линии от вершины до края основания)
+  ctx.beginPath(); ctx.moveTo(tip.x, tip.y); ctx.lineTo(base[0].x, base[0].y);
+  ctx.strokeStyle = cEdge; ctx.lineWidth = 1.0; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tip.x, tip.y); ctx.lineTo(base[Math.floor(RAYS/2)].x, base[Math.floor(RAYS/2)].y);
+  ctx.stroke();
+
+  // Метка
+  ctx.save();
+  ctx.fillStyle = act ? '#ffaa44' : '#88ccff';
+  ctx.font = 'bold ' + Math.max(10, 11*vZoom) + 'px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = '#000000dd'; ctx.shadowBlur = 5;
+  ctx.fillText(cfg.name, cp.x, cp.y - Math.max(12, 14*vZoom));
+  ctx.restore();
+}
+
+// ============================================================
+// ОСНОВНАЯ ФУНКЦИЯ РИСОВАНИЯ
+// ============================================================
+function draw() {
+  ctx.clearRect(0, 0, cw, ch);
+
+  // Фон
+  var g = ctx.createRadialGradient(cw/2, ch/2, 0, cw/2, ch/2, Math.max(cw,ch)/1.5);
+  g.addColorStop(0, '#1c2535'); g.addColorStop(1, '#080c14');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+
+  // Единый пол
+  face([proj(-10.5,0,0),proj(9.5,0,0),proj(9.5,0,15),proj(-10.5,0,15)], '#110e06', '#ffffff05');
+
+  // Сетка пола
+  ctx.save(); ctx.strokeStyle = '#ffffff05'; ctx.lineWidth = 0.4;
+  for (var x = -10; x <= 9; x += 2) {
+    ctx.beginPath(); ctx.moveTo(proj(x,.01,0).x, proj(x,.01,0).y);
+    ctx.lineTo(proj(x,.01,15).x, proj(x,.01,15).y); ctx.stroke();
+  }
+  for (var z = 0; z <= 15; z += 2) {
+    ctx.beginPath(); ctx.moveTo(proj(-10.5,.01,z).x, proj(-10.5,.01,z).y);
+    ctx.lineTo(proj(9.5,.01,z).x, proj(9.5,.01,z).y); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Сортировка и рисование комнат
+  var sorted = ROOMS.slice().sort(function(a,b) {
+    var yr = vYaw*Math.PI/180;
+    var da = -((a.x1+a.x2)/2-BCX)*Math.sin(yr) + ((a.z1+a.z2)/2-BCZ)*Math.cos(yr);
+    var db = -((b.x1+b.x2)/2-BCX)*Math.sin(yr) + ((b.z1+b.z2)/2-BCZ)*Math.cos(yr);
+    return db - da;
+  });
+  sorted.forEach(function(r) { drawRoom(r); });
+
+  // Перегородки
+  ctx.save(); ctx.strokeStyle = '#ffffff20'; ctx.lineWidth = 0.8;
+  var walls = [
+    [proj(-2.5,0,0),proj(-2.5,RH,0),proj(-2.5,RH,15),proj(-2.5,0,15)],
+    [proj(2.5,0,0), proj(2.5,RH,0), proj(2.5,RH,15), proj(2.5,0,15)],
+    [proj(2.5,0,7), proj(9.5,0,7),  proj(9.5,RH,7),  proj(2.5,RH,7)],
+    [proj(-10.5,0,7),proj(-2.5,0,7),proj(-2.5,RH,7),proj(-10.5,RH,7)],
+    [proj(-10.5,0,3),proj(-2.5,0,3),proj(-2.5,RH,3),proj(-10.5,RH,3)],
+  ];
+  walls.forEach(function(pts) {
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    pts.forEach(function(pt) { ctx.lineTo(pt.x,pt.y); }); ctx.stroke();
+  });
+  ctx.restore();
+
+  // Вход (синяя дверь сверху)
+  face([proj(-.7,0,15),proj(.7,0,15),proj(.7,RH*.7,15),proj(-.7,RH*.7,15)],
+       'rgba(60,140,220,.18)', 'rgba(60,140,220,.7)', 1.5);
+  var ep = proj(0, RH+0.4, 15);
+  ctx.save();
+  ctx.fillStyle='rgba(60,140,220,.8)';
+  ctx.beginPath(); ctx.moveTo(ep.x,ep.y); ctx.lineTo(ep.x-8,ep.y-16); ctx.lineTo(ep.x+8,ep.y-16);
+  ctx.closePath(); ctx.fill();
+  ctx.font='10px Segoe UI'; ctx.fillStyle='rgba(60,140,220,.7)'; ctx.textAlign='center';
+  ctx.fillText('ВХОД', ep.x, ep.y-20);
+  ctx.restore();
+
+  // Камеры
+  CAMS.forEach(function(cfg, idx) { drawCam(cfg, idx); });
+}
+
+// ============================================================
+// УПРАВЛЕНИЕ
+// ============================================================
+function selectCam(idx) {
+  selCam = idx;
+  document.querySelectorAll('.cam-item').forEach(function(el,i){ el.classList.toggle('active', i===idx); });
+  var c = CAMS[idx];
+  document.getElementById('activeName').textContent = c.name;
+  document.getElementById('slRot').value  = c.rot;
+  document.getElementById('slTilt').value = c.tilt;
+  document.getElementById('slFov').value  = c.fov || 38;
+  document.getElementById('lblRot').textContent  = c.rot + '°';
+  document.getElementById('lblTilt').textContent = c.tilt + '°';
+  document.getElementById('lblFov').textContent  = (c.fov||38) + '°';
+  draw();
+}
+
+document.getElementById('slRot').oninput = function() {
+  CAMS[selCam].rot = +this.value;
+  document.getElementById('lblRot').textContent = this.value + '°';
+  draw();
+};
+document.getElementById('slTilt').oninput = function() {
+  CAMS[selCam].tilt = +this.value;
+  document.getElementById('lblTilt').textContent = this.value + '°';
+  draw();
+};
+document.getElementById('slFov').oninput = function() {
+  CAMS[selCam].fov = +this.value;
+  document.getElementById('lblFov').textContent = this.value + '°';
+  draw();
+};
+
+function setView(pitch, yaw) { tP = pitch; tY = yaw; }
+
+var isDrag = false, mx = 0, my = 0;
+canvas.addEventListener('mousedown', function(e){ isDrag=true; mx=e.clientX; my=e.clientY; });
+window.addEventListener('mouseup', function(){ isDrag=false; });
+canvas.addEventListener('mousemove', function(e){
+  if (!isDrag) return;
+  tY += (e.clientX-mx)*0.4; tP -= (e.clientY-my)*0.3;
+  tP = Math.max(5, Math.min(89, tP));
+  mx=e.clientX; my=e.clientY;
+});
+canvas.addEventListener('wheel', function(e){
+  tZ -= e.deltaY*0.001; tZ = Math.max(0.3, Math.min(3.5, tZ)); e.preventDefault();
+}, {passive:false});
+canvas.addEventListener('touchstart', function(e){ isDrag=true; mx=e.touches[0].clientX; my=e.touches[0].clientY; }, {passive:true});
+canvas.addEventListener('touchend', function(){ isDrag=false; }, {passive:true});
+canvas.addEventListener('touchmove', function(e){
+  if (!isDrag) return;
+  tY += (e.touches[0].clientX-mx)*0.4; tP -= (e.touches[0].clientY-my)*0.3;
+  tP = Math.max(5, Math.min(89, tP));
+  mx=e.touches[0].clientX; my=e.touches[0].clientY;
+}, {passive:true});
+
+window.addEventListener('resize', function(){ resize(); draw(); });
+
+function animate() {
+  requestAnimationFrame(animate);
+  var changed = false;
+  if (Math.abs(tP-vPitch) > 0.2) { vPitch += (tP-vPitch)*0.12; changed=true; }
+  if (Math.abs(tY-vYaw)   > 0.2) { vYaw   += (tY-vYaw)  *0.12; changed=true; }
+  if (Math.abs(tZ-vZoom)  > 0.004){ vZoom  += (tZ-vZoom) *0.12; changed=true; }
+  if (changed) draw();
+}
+
+resize();
+draw();
+animate();
+</script>
+</body>
+</html>
